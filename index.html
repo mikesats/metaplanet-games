@@ -112,6 +112,7 @@ canvas{display:block;width:100%;height:100%}
 #leaderboard .lb-close{background:none;border:1px solid #444;color:#888;padding:8px 20px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:2px;margin-top:20px}
 #leaderboard .lb-close:hover{border-color:#F5A623;color:#F5A623}
 #leaderboard .loading{color:#444;font-size:12px;margin-top:40px}
+#leaderboard .rank-note{font-size:clamp(7px,1.6vw,9px);color:#444;margin-bottom:15px;font-style:italic}
 
 /* WIN SCREEN */
 #win-screen{position:fixed;inset:0;background:rgba(5,5,10,0.95);z-index:90;display:none;justify-content:center;align-items:center;flex-direction:column;padding:20px}
@@ -188,6 +189,7 @@ canvas{display:block;width:100%;height:100%}
 <div id="leaderboard">
   <h2 data-i18n="lb">LEADERBOARD</h2>
   <div class="sub" data-i18n="worldRankings">WORLDWIDE RANKINGS</div>
+  <div class="sub rank-note" data-i18n="rankNote">Ranked by fastest time + most BTC collected</div>
   <div id="lb-content"><div class="loading" data-i18n="loading">Loading...</div></div>
   <button class="lb-close" onclick="closeLB()" data-i18n="close">CLOSE</button>
 </div>
@@ -251,7 +253,8 @@ const i18n = {
     lbLoading: 'Loading leaderboard...',
     player: 'Player',
     rank: '#',
-    jump: 'JUMP'
+    jump: 'JUMP',
+    rankNote: 'Ranked by fastest time + most BTC collected'
   },
   ja: {
     artCollected: '\u30A2\u30FC\u30C8\u53CE\u96C6',
@@ -276,7 +279,8 @@ const i18n = {
     lbLoading: '\u30E9\u30F3\u30AD\u30F3\u30B0\u8AAD\u307F\u8FBC\u307F\u4E2D...',
     player: '\u30D7\u30EC\u30A4\u30E4\u30FC',
     rank: '#',
-    jump: '\u30B8\u30E3\u30F3\u30D7'
+    jump: '\u30B8\u30E3\u30F3\u30D7',
+    rankNote: '\u6700\u901F\u30BF\u30A4\u30E0\uFF0B\u6700\u591ABTC\u3067\u30E9\u30F3\u30AD\u30F3\u30B0'
   }
 };
 
