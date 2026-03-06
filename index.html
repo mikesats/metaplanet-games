@@ -972,7 +972,7 @@ async function renderLB() {
   const btcContent = document.getElementById('btc-lb-content');
   const btcEntries = await fetchBtcLeaderboard();
   if (btcEntries && btcEntries.length > 0) {
-    let btcHtml = `<table><thead><tr><th class="rank">${t('rank')}</th><th>${t('player')}</th><th>BTC</th><th>${t('time')}</th></tr></thead><tbody>`;
+    let btcHtml = `<table><thead><tr><th class="rank">${t('rank')}</th><th>${t('player')}</th><th>BTC</th><th>${t('time')}</th><th class="date-col">${currentLang === 'ja' ? '日付' : 'Date'}</th></tr></thead><tbody>`;
     btcEntries.forEach((e, i) => {
       const isYou = e.player_name === playerName;
       const cls = isYou ? ' class="you"' : '';
@@ -981,6 +981,8 @@ async function renderLB() {
       btcHtml += `<td class="name">${escapeHtml(e.player_name)}</td>`;
       btcHtml += `<td class="btc-col">${e.bitcoin_collected} \u20BF</td>`;
       btcHtml += `<td class="time">${formatTime(parseFloat(e.time_seconds))}</td>`;
+      const dateStr = e.created_at ? new Date(e.created_at).toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : 'en-US', {month:'short',day:'numeric'}) : '';
+      btcHtml += `<td class="date-col">${dateStr}</td>`;
       btcHtml += '</tr>';
     });
     btcHtml += '</tbody></table>';
