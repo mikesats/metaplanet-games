@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="description" content="Collect 21 Metaplanet fan art pieces and Bitcoin in this space platformer. Race for the fastest time on the worldwide leaderboard!">
+<meta property="og:title" content="Metaplanet Runner">
+<meta property="og:description" content="Collect 21 Metaplanet fan art pieces and Bitcoin in this space platformer. Race for the fastest time on the worldwide leaderboard!">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Metaplanet Runner">
+<meta name="twitter:description" content="Collect 21 Metaplanet fan art pieces and Bitcoin in this space platformer.">
+<title>METAPLANET RUNNER</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{overflow:hidden;position:fixed;width:100%;height:100%;touch-action:none}
+body{background:#0a0a0f;font-family:'Courier New',monospace;color:#e0e0e0;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+canvas{display:block;width:100%;height:100%}
+
+/* HUD */
+#ui{position:fixed;top:0;left:0;right:0;padding:max(8px, env(safe-area-inset-top)) 15px 6px;display:flex;justify-content:space-between;pointer-events:none;z-index:10;background:linear-gradient(to bottom,rgba(10,10,15,0.7),transparent)}
+.stat{text-align:center}
+.stat-label{font-size:clamp(7px,1.5vw,9px);color:#666;letter-spacing:2px;text-transform:uppercase}
+.stat-value{font-size:clamp(14px,3vw,20px);color:#F5A623;text-shadow:0 0 10px rgba(245,166,35,0.4)}
+.stat-value.btc{color:#f7931a}
+.stat-value.timer{color:#0f0;font-variant-numeric:tabular-nums}
+
+/* Art popup */
+#art-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;display:none;text-align:center;pointer-events:none}
+#art-popup img{width:min(180px,40vw);height:min(180px,40vw);object-fit:cover;border:2px solid #F5A623;box-shadow:0 0 30px rgba(245,166,35,0.5)}
+#art-popup .title{margin-top:6px;font-size:clamp(10px,2vw,12px);color:#F5A623;letter-spacing:1px}
+
+/* INTRO */
+#intro{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0f0f1a,#050508);z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;overflow-y:auto}
+#intro.hidden{display:none}
+#intro h1{font-size:clamp(28px,7vw,48px);color:#F5A623;letter-spacing:clamp(3px,1vw,6px);text-shadow:0 0 40px rgba(245,166,35,0.4)}
+#intro h2{font-size:clamp(10px,2.5vw,13px);color:#555;letter-spacing:5px;margin:5px 0 20px}
+#intro .desc{font-size:clamp(10px,2.2vw,12px);color:#444;max-width:480px;text-align:center;line-height:1.8;margin-bottom:15px;padding:0 10px}
+#intro .name-entry{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:20px}
+#intro .name-entry label{font-size:clamp(8px,1.8vw,10px);color:#666;letter-spacing:3px;text-transform:uppercase}
+#intro .name-entry input{background:rgba(255,255,255,0.05);border:2px solid #333;color:#F5A623;padding:10px 16px;font-family:inherit;font-size:clamp(14px,3vw,18px);letter-spacing:3px;text-align:center;width:min(250px,70vw);outline:none;transition:border-color .3s;border-radius:0}
+#intro .name-entry input:focus{border-color:#F5A623}
+#intro .name-entry input::placeholder{color:#333}
+#intro .start{background:none;border:2px solid #F5A623;color:#F5A623;padding:12px 40px;font-family:inherit;font-size:clamp(13px,3vw,15px);letter-spacing:4px;cursor:pointer;transition:all .3s;text-transform:uppercase}
+#intro .start:hover{background:#F5A623;color:#0a0a0f;box-shadow:0 0 30px rgba(245,166,35,0.4)}
+#intro .start:disabled{opacity:0.3;cursor:not-allowed}
+#intro .start:disabled:hover{background:none;color:#F5A623;box-shadow:none}
+#intro .keys{margin-top:15px;font-size:clamp(8px,1.8vw,10px);color:#333;letter-spacing:1px;text-align:center}
+#intro .count{font-size:clamp(36px,10vw,52px);color:#F5A623;font-weight:bold;margin-bottom:6px;text-shadow:0 0 30px rgba(245,166,35,0.3)}
+.lb-btn{background:none;border:1px solid #444;color:#888;padding:8px 20px;font-family:inherit;font-size:11px;letter-spacing:2px;cursor:pointer;margin-top:12px;transition:all .3s}
+.lb-btn:hover{border-color:#F5A623;color:#F5A623}
+#intro .credit{font-size:clamp(8px,1.6vw,10px);color:#333;letter-spacing:1px;margin-top:20px}
+#lang-toggle{position:fixed;top:max(8px,env(safe-area-inset-top));left:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:4px 10px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;z-index:101;border-radius:4px;transition:all .3s}
+#lang-toggle:hover{border-color:#F5A623;color:#F5A623}
+
+/* MOBILE TOUCH CONTROLS */
+#touch-controls{position:fixed;bottom:0;left:0;right:0;z-index:15;display:none;padding:0 max(10px,env(safe-area-inset-left)) max(15px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right));pointer-events:none}
+.touch-visible #touch-controls{display:flex;justify-content:space-between;align-items:flex-end}
+#touch-dpad{display:flex;gap:8px;pointer-events:auto}
+.touch-btn{width:clamp(58px,14vw,80px);height:clamp(58px,14vw,80px);border-radius:16px;background:rgba(245,166,35,0.08);border:2px solid rgba(245,166,35,0.25);color:rgba(245,166,35,0.6);display:flex;justify-content:center;align-items:center;font-size:clamp(22px,5vw,32px);pointer-events:auto;-webkit-touch-callout:none}
+.touch-btn.active{background:rgba(245,166,35,0.2);border-color:rgba(245,166,35,0.6);color:#F5A623}
+#touch-jump{width:clamp(80px,20vw,110px);height:clamp(80px,20vw,110px);border-radius:50%;font-size:clamp(10px,2.2vw,13px);letter-spacing:2px;font-family:inherit;font-weight:bold}
+#touch-menu{display:flex;gap:6px;position:fixed;top:max(6px,env(safe-area-inset-top));right:10px;z-index:16;pointer-events:auto}
+.touch-visible #touch-menu{display:flex}
+.tmenu-btn{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;display:none;justify-content:center;align-items:center;font-size:14px;font-family:inherit;pointer-events:auto}
+.touch-visible .tmenu-btn{display:flex}
+
+/* GALLERY */
+#gallery{position:fixed;inset:0;background:rgba(5,5,10,0.97);z-index:50;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#gallery.open{display:block}
+#gallery .bar{display:flex;justify-content:space-between;align-items:center;padding:max(15px,env(safe-area-inset-top)) 20px 12px;border-bottom:1px solid rgba(245,166,35,0.15);position:sticky;top:0;background:rgba(5,5,10,0.98);z-index:1}
+#gallery h2{font-size:clamp(14px,3vw,18px);color:#F5A623;letter-spacing:3px}
+#gallery .close{background:none;border:1px solid #444;color:#888;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:11px}
+#gallery .close:hover{border-color:#F5A623;color:#F5A623}
+#gallery .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(90px,25vw),1fr));gap:5px;padding:12px 15px 30px}
+#gallery .cell{aspect-ratio:1;background:#111;border:1px solid #222;overflow:hidden;position:relative;cursor:pointer;transition:border-color .2s}
+#gallery .cell:hover{border-color:#F5A623}
+#gallery .cell img{width:100%;height:100%;object-fit:cover}
+#gallery .cell.locked{opacity:.12;cursor:default}
+#gallery .cell span{position:absolute;bottom:1px;right:3px;font-size:clamp(6px,1.5vw,8px);color:rgba(255,255,255,0.3)}
+
+/* VIEWER */
+#viewer{position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:60;display:none;justify-content:center;align-items:center;flex-direction:column;padding:20px}
+#viewer.open{display:flex}
+#viewer img{max-width:min(85vw,600px);max-height:70vh;object-fit:contain;border:1px solid rgba(245,166,35,0.2)}
+#viewer .info{margin-top:12px;text-align:center}
+#viewer .info h3{color:#F5A623;font-size:clamp(11px,2.5vw,13px);letter-spacing:2px}
+#viewer .info p{color:#555;font-size:10px;margin-top:3px}
+#viewer .vclose{position:fixed;top:max(15px,env(safe-area-inset-top));right:15px;background:none;border:1px solid #444;color:#888;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:11px}
+#viewer .vclose:hover{border-color:#F5A623;color:#F5A623}
+
+/* LEADERBOARD */
+#leaderboard{position:fixed;inset:0;background:rgba(5,5,10,0.97);z-index:110;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;align-items:center;flex-direction:column;padding:max(30px,env(safe-area-inset-top)) 10px 40px}
+#leaderboard.open{display:flex}
+#leaderboard h2{font-size:clamp(18px,5vw,24px);color:#F5A623;letter-spacing:4px;margin-bottom:5px}
+#leaderboard .sub{font-size:clamp(8px,2vw,10px);color:#555;letter-spacing:2px;margin-bottom:20px}
+#leaderboard table{border-collapse:collapse;width:95%;max-width:700px}
+#leaderboard th{font-size:clamp(7px,1.5vw,9px);color:#666;letter-spacing:1px;text-transform:uppercase;padding:6px 6px;text-align:left;border-bottom:1px solid #222;white-space:nowrap}
+#leaderboard td{font-size:clamp(10px,2.2vw,13px);padding:8px 6px;border-bottom:1px solid #151518;white-space:nowrap}
+#leaderboard tr.you td{color:#F5A623;font-weight:bold}
+#leaderboard .rank{color:#666;width:30px}
+#leaderboard .name{color:#e0e0e0;max-width:100px;overflow:hidden;text-overflow:ellipsis}
+#leaderboard .time{color:#0f0;font-variant-numeric:tabular-nums}
+#leaderboard .btc-col{color:#f7931a}
+#leaderboard .art-col{color:#F5A623}
+#leaderboard .incomplete{opacity:0.5}
+#leaderboard .lb-close{background:none;border:1px solid #444;color:#888;padding:8px 20px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:2px;margin-top:20px}
+#leaderboard .lb-close:hover{border-color:#F5A623;color:#F5A623}
+#leaderboard .loading{color:#444;font-size:12px;margin-top:40px}
+
+/* WIN SCREEN */
+#win-screen{position:fixed;inset:0;background:rgba(5,5,10,0.95);z-index:90;display:none;justify-content:center;align-items:center;flex-direction:column;padding:20px}
+#win-screen.open{display:flex}
+#win-screen h1{font-size:clamp(22px,6vw,36px);color:#F5A623;letter-spacing:clamp(3px,1vw,5px);text-shadow:0 0 30px rgba(245,166,35,0.4);margin-bottom:10px;text-align:center}
+#win-screen .final-stats{display:flex;gap:clamp(20px,5vw,40px);margin:15px 0 25px}
+#win-screen .fs{text-align:center}
+#win-screen .fs-label{font-size:clamp(7px,1.5vw,9px);color:#666;letter-spacing:2px;text-transform:uppercase}
+#win-screen .fs-value{font-size:clamp(20px,5vw,28px);color:#F5A623;margin-top:4px}
+#win-screen .fs-value.time-val{color:#0f0}
+#win-screen .fs-value.btc-val{color:#f7931a}
+#win-screen .sub-msg{font-size:clamp(9px,2vw,11px);color:#555;margin-bottom:8px}
+#win-screen .win-btns{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+#win-screen .win-btns button{background:none;border:2px solid #F5A623;color:#F5A623;padding:10px 24px;font-family:inherit;font-size:clamp(11px,2.5vw,13px);letter-spacing:3px;cursor:pointer;transition:all .3s}
+#win-screen .win-btns button:hover{background:#F5A623;color:#0a0a0f}
+</style>
+</head>
+<body>
+
+<div id="ui" style="display:none">
+  <div class="stat"><div class="stat-label" data-i18n="artCollected">Art Collected</div><div class="stat-value" id="ui-art">0 / 21</div></div>
+  <div class="stat"><div class="stat-label" data-i18n="time">Time</div><div class="stat-value timer" id="ui-timer">0:00.00</div></div>
+  <div class="stat"><div class="stat-label" data-i18n="bitcoin">Bitcoin</div><div class="stat-value btc" id="ui-btc">0</div></div>
+</div>
+
+<button id="lang-toggle" onclick="toggleLang()">JP / EN</button>
+
+<div id="art-popup"><img id="popup-img" src=""><div class="title" id="popup-title"></div></div>
+
+<!-- MOBILE MENU BUTTONS (top-right) -->
+<div id="touch-menu">
+  <button class="tmenu-btn" id="tm-gallery" onclick="toggleGallery()">C</button>
+  <button class="tmenu-btn" id="tm-lb" onclick="toggleLB()">L</button>
+</div>
+
+<!-- TOUCH CONTROLS (bottom) -->
+<div id="touch-controls">
+  <div id="touch-dpad">
+    <div class="touch-btn" id="touch-left">&#9664;</div>
+    <div class="touch-btn" id="touch-right">&#9654;</div>
+  </div>
+  <div class="touch-btn" id="touch-jump">JUMP</div>
+</div>
+
+<div id="intro">
+  <div class="count">21</div>
+  <h1>METAPLANET</h1>
+  <h2>RUNNER</h2>
+  <p class="desc" data-i18n="desc">Collect all 21 randomly chosen Metaplanet fan art pieces and as much Bitcoin as you can. Fastest time + most BTC tops the worldwide leaderboard.</p>
+  <div class="name-entry">
+    <label data-i18n="enterName">Enter your name</label>
+    <input type="text" id="player-name" placeholder="SATOSHI" maxlength="20" autocomplete="off">
+  </div>
+  <button class="start" id="start-btn" disabled data-i18n="play">PLAY</button>
+  <div class="keys" id="controls-hint" data-i18n="controlsDesktop">Arrow Keys / WASD to move &amp; jump · C for collection · L for leaderboard</div>
+  <button class="lb-btn" id="intro-lb-btn" data-i18n="lb">LEADERBOARD</button>
+  <div class="credit">Mikesmlw Metaplanet Games Submission</div>
+</div>
+
+<div id="gallery">
+  <div class="bar">
+    <h2><span data-i18n="collection">COLLECTION</span> <span id="gal-count">0/21</span></h2>
+    <button class="close" onclick="toggleGallery()" data-i18n="close">CLOSE</button>
+  </div>
+  <div class="grid" id="gal-grid"></div>
+</div>
+
+<div id="viewer">
+  <button class="vclose" onclick="closeViewer()" data-i18n="close">CLOSE</button>
+  <img id="viewer-img" src="">
+  <div class="info"><h3 id="viewer-title"></h3><p id="viewer-num"></p></div>
+</div>
+
+<div id="leaderboard">
+  <h2 data-i18n="lb">LEADERBOARD</h2>
+  <div class="sub" data-i18n="worldRankings">WORLDWIDE RANKINGS</div>
+  <div id="lb-content"><div class="loading" data-i18n="loading">Loading...</div></div>
+  <button class="lb-close" onclick="closeLB()" data-i18n="close">CLOSE</button>
+</div>
+
+<div id="win-screen">
+  <h1 data-i18n="allCollected">ALL ART COLLECTED!</h1>
+  <div class="final-stats">
+    <div class="fs"><div class="fs-label" data-i18n="time">Time</div><div class="fs-value time-val" id="win-time">0:00.00</div></div>
+    <div class="fs"><div class="fs-label" data-i18n="bitcoin">Bitcoin</div><div class="fs-value btc-val" id="win-btc">0</div></div>
+    <div class="fs"><div class="fs-label">Art</div><div class="fs-value" id="win-art">21/21</div></div>
+  </div>
+  <div class="sub-msg" id="win-msg" data-i18n="submitting">Submitting to leaderboard...</div>
+  <div class="win-btns">
+    <button onclick="showLB()" data-i18n="lb">LEADERBOARD</button>
+    <button onclick="playAgain()" data-i18n="playAgain">PLAY AGAIN</button>
+  </div>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+// =====================================================
+// METAPLANET RUNNER - 2D Side-Scrolling Platformer
+// Collect 21 random art pieces from #358-#407 + Bitcoin
+// Worldwide Supabase leaderboard · Mobile + Desktop
+// =====================================================
+
+// ---------- MOBILE DETECTION ----------
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+if (isTouchDevice) document.body.classList.add('touch-visible');
+
+// Prevent all unwanted mobile gestures
+document.addEventListener('touchmove', e => { if (e.target.closest('#gallery') || e.target.closest('#leaderboard') || e.target.closest('#intro')) return; e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+
+// ---------- i18n (English / Japanese) ----------
+let currentLang = 'en';
+
+const i18n = {
+  en: {
+    artCollected: 'Art Collected',
+    time: 'Time',
+    bitcoin: 'Bitcoin',
+    desc: 'Collect all 21 randomly chosen Metaplanet fan art pieces and as much Bitcoin as you can. Fastest time + most BTC tops the worldwide leaderboard.',
+    enterName: 'Enter your name',
+    play: 'PLAY',
+    controlsDesktop: 'Arrow Keys / WASD to move & jump · C for collection · L for leaderboard',
+    controlsMobile: 'Tap left/right to move · Tap JUMP to jump',
+    lb: 'LEADERBOARD',
+    collection: 'COLLECTION',
+    close: 'CLOSE',
+    worldRankings: 'WORLDWIDE RANKINGS',
+    loading: 'Loading...',
+    allCollected: 'ALL ART COLLECTED!',
+    submitting: 'Submitting to leaderboard...',
+    scoreSubmitted: 'Score submitted! Check the leaderboard.',
+    submitFailed: 'Could not submit score. Check your connection.',
+    playAgain: 'PLAY AGAIN',
+    noScores: 'No scores yet. Be the first!',
+    lbLoading: 'Loading leaderboard...',
+    player: 'Player',
+    rank: '#',
+    jump: 'JUMP'
+  },
+  ja: {
+    artCollected: '\u30A2\u30FC\u30C8\u53CE\u96C6',
+    time: '\u30BF\u30A4\u30E0',
+    bitcoin: '\u30D3\u30C3\u30C8\u30B3\u30A4\u30F3',
+    desc: '\u30E9\u30F3\u30C0\u30E0\u306B\u9078\u3070\u308C\u305F21\u500B\u306E\u30E1\u30BF\u30D7\u30E9\u30CD\u30C3\u30C8\u30D5\u30A1\u30F3\u30A2\u30FC\u30C8\u3068\u30D3\u30C3\u30C8\u30B3\u30A4\u30F3\u3092\u96C6\u3081\u3088\u3046\u3002\u6700\u901F\u30BF\u30A4\u30E0\uFF0B\u6700\u591ABTC\u3067\u4E16\u754C\u30E9\u30F3\u30AD\u30F3\u30B0\u306E\u30C8\u30C3\u30D7\u3092\u76EE\u6307\u305B\uFF01',
+    enterName: '\u540D\u524D\u3092\u5165\u529B',
+    play: '\u30D7\u30EC\u30A4',
+    controlsDesktop: '\u77E2\u5370\u30AD\u30FC / WASD\u3067\u79FB\u52D5\u30FB\u30B8\u30E3\u30F3\u30D7 · C\u3067\u30B3\u30EC\u30AF\u30B7\u30E7\u30F3 · L\u3067\u30E9\u30F3\u30AD\u30F3\u30B0',
+    controlsMobile: '\u5DE6\u53F3\u30BF\u30C3\u30D7\u3067\u79FB\u52D5 · \u30B8\u30E3\u30F3\u30D7\u30DC\u30BF\u30F3\u3067\u30B8\u30E3\u30F3\u30D7',
+    lb: '\u30E9\u30F3\u30AD\u30F3\u30B0',
+    collection: '\u30B3\u30EC\u30AF\u30B7\u30E7\u30F3',
+    close: '\u9589\u3058\u308B',
+    worldRankings: '\u4E16\u754C\u30E9\u30F3\u30AD\u30F3\u30B0',
+    loading: '\u8AAD\u307F\u8FBC\u307F\u4E2D...',
+    allCollected: '\u5168\u30A2\u30FC\u30C8\u53CE\u96C6\u5B8C\u4E86\uFF01',
+    submitting: '\u30E9\u30F3\u30AD\u30F3\u30B0\u306B\u9001\u4FE1\u4E2D...',
+    scoreSubmitted: '\u30B9\u30B3\u30A2\u9001\u4FE1\u5B8C\u4E86\uFF01\u30E9\u30F3\u30AD\u30F3\u30B0\u3092\u78BA\u8A8D\u3057\u3088\u3046\u3002',
+    submitFailed: '\u30B9\u30B3\u30A2\u3092\u9001\u4FE1\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u63A5\u7D9A\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002',
+    playAgain: '\u3082\u3046\u4E00\u5EA6',
+    noScores: '\u307E\u3060\u30B9\u30B3\u30A2\u304C\u3042\u308A\u307E\u305B\u3093\u3002\u6700\u521D\u306E\u30D7\u30EC\u30A4\u30E4\u30FC\u306B\u306A\u308D\u3046\uFF01',
+    lbLoading: '\u30E9\u30F3\u30AD\u30F3\u30B0\u8AAD\u307F\u8FBC\u307F\u4E2D...',
+    player: '\u30D7\u30EC\u30A4\u30E4\u30FC',
+    rank: '#',
+    jump: '\u30B8\u30E3\u30F3\u30D7'
+  }
+};
+
+function t(key) { return i18n[currentLang][key] || i18n['en'][key] || key; }
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    // For controls hint, pick mobile or desktop version
+    if (key === 'controlsDesktop' || key === 'controlsMobile') {
+      el.textContent = t(isTouchDevice ? 'controlsMobile' : 'controlsDesktop');
+    } else {
+      el.textContent = t(key);
+    }
+  });
+  // Update jump button text
+  const jumpBtn = document.getElementById('touch-jump');
+  if (jumpBtn) jumpBtn.textContent = t('jump');
+  // Update lang toggle label
+  document.getElementById('lang-toggle').textContent = currentLang === 'en' ? '\u65E5\u672C\u8A9E' : 'English';
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ja' : 'en';
+  applyLang();
+}
+
+// Apply initial language (also sets controls hint for touch/desktop)
+applyLang();
+
+// ---------- SUPABASE CONFIG ----------
+const SUPABASE_URL = 'https://xcmmbqmnpzlnulscfzws.supabase.co';
+// Public anon key (read-only via RLS) — safe to expose in client code
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjbW1icW1ucHpsbnVsc2NmendzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTE1NzEsImV4cCI6MjA4NzU4NzU3MX0.DypiL0yOdYUYQjpwWJGkdL7Ju7IdVpbCfmN2_aJZKrg';
+
+async function fetchLeaderboard() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/metaplanet_leaderboard?order=completed.desc,time_seconds.asc,bitcoin_collected.desc&limit=50`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    return await res.json();
+  } catch (e) { return []; }
+}
+
+async function submitScore(name, timeSec, artCount, btc, completed) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        player_name: name,
+        time_seconds: Math.round(timeSec * 100) / 100,
+        art_collected: artCount,
+        bitcoin_collected: btc,
+        completed: completed
+      })
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+// ---------- CANVAS ----------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W, H;
+const DPR = Math.min(window.devicePixelRatio || 1, 2); // cap at 2x for perf
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ---------- GAME STATE ----------
+let playing = false;
+let gameFinished = false;
+let allArtData = [];
+let artData = [];    // random 21 from #358-#407
+let collected = new Set();
+let btcCount = 0;
+let cameraX = 0;
+let playerName = '';
+let timerStart = 0;
+let timerElapsed = 0;
+let timerRunning = false;
+let submittedScore = false;
+const TOTAL_ART = 21;
+const ART_START_NUM = 358; // pool: #358-#407, randomly pick 21
+const GRAVITY = 0.55;
+const JUMP_FORCE = -12;
+const MOVE_SPEED = 5;
+const GROUND_Y_RATIO = 0.78;
+
+// ---------- STARS (parallax) ----------
+const stars = [];
+for (let i = 0; i < 300; i++) {
+  stars.push({
+    x: Math.random() * 5000,
+    y: Math.random(),
+    size: Math.random() * 2 + 0.5,
+    speed: Math.random() * 0.3 + 0.1,
+    brightness: Math.random() * 0.6 + 0.4
+  });
+}
+
+// ---------- PLAYER ----------
+const player = {
+  x: 200, y: 0, vy: 0, vx: 0,
+  w: 28, h: 56,
+  onGround: false,
+  jumps: 0, maxJumps: 2,
+  jetpackFlame: 0,
+  facing: 1
+};
+
+// ---------- WORLD ----------
+let platforms = [];
+let artFrames = [];
+let coins = [];
+let checkpointX = 200;
+
+function generateWorld() {
+  platforms = [];
+  artFrames = [];
+  coins = [];
+
+  const groundY = H * GROUND_Y_RATIO;
+  let px = 0;
+  let artIndex = 0;
+  let platIndex = 0;
+
+  // Starting platform (wide)
+  platforms.push({ x: 0, y: groundY, w: 400, h: 20 });
+  px = 400;
+
+  function seededRand(seed) {
+    let s = seed * 9301 + 49297;
+    s = s % 233280;
+    return s / 233280;
+  }
+
+  while (artIndex < TOTAL_ART && px < 40000) {
+    const seed = platIndex;
+    const gap = 60 + seededRand(seed * 3) * 80;
+    const platW = 120 + seededRand(seed * 5) * 160;
+    const yVariation = (seededRand(seed * 7) - 0.5) * 120;
+    const platY = Math.max(H * 0.35, Math.min(groundY + 40, groundY + yVariation));
+
+    px += gap;
+    platforms.push({ x: px, y: platY, w: platW, h: 16 });
+
+    // Bitcoin coins
+    const coinCount = 3 + Math.floor(seededRand(seed * 11) * 5);
+    for (let c = 0; c < coinCount; c++) {
+      coins.push({
+        x: px + 20 + c * ((platW - 40) / coinCount),
+        y: platY - 45 - seededRand(seed * 13 + c) * 25,
+        collected: false,
+        bobOffset: seededRand(seed * 17 + c) * Math.PI * 2
+      });
+    }
+
+    // Art frame every 3 platforms
+    if (platIndex % 3 === 2 && artIndex < TOTAL_ART) {
+      artFrames.push({
+        x: px + platW / 2 - 30,
+        y: platY - 110,
+        artIndex: artIndex,
+        collected: false,
+        img: null,
+        loadStarted: false
+      });
+      artIndex++;
+    }
+
+    px += platW;
+    platIndex++;
+  }
+}
+
+// ---------- TIMER ----------
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s.toFixed(2)}`;
+}
+
+function updateTimer() {
+  if (timerRunning) {
+    timerElapsed = (performance.now() - timerStart) / 1000;
+  }
+  document.getElementById('ui-timer').textContent = formatTime(timerElapsed);
+}
+
+// ---------- LOAD METADATA ----------
+async function loadMetadata() {
+  const res = await fetch('assets/metadata.json');
+  const meta = await res.json();
+  allArtData = meta.artworks;
+  // Filter pool to #358-#407, then randomly pick 21
+  const pool = allArtData.filter(a => {
+    const n = parseInt(a.num);
+    return n >= ART_START_NUM && n <= 407;
+  });
+  // Shuffle using Fisher-Yates
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  // Take first 21, then sort by number for display
+  artData = pool.slice(0, TOTAL_ART);
+  artData.sort((a, b) => parseInt(a.num) - parseInt(b.num));
+}
+
+// ---------- ART IMAGE LOADING ----------
+function loadArtImage(frame) {
+  if (frame.loadStarted) return;
+  frame.loadStarted = true;
+  const img = new Image();
+  img.src = artData[frame.artIndex].thumb;
+  img.onload = () => { frame.img = img; };
+}
+
+// ---------- AUDIO ----------
+let audioCtx;
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Resume on touch (iOS requirement)
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playSound(freq, dur, type = 'sine') {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type;
+  o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(freq * 2, audioCtx.currentTime + dur * 0.3);
+  g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  o.start(); o.stop(audioCtx.currentTime + dur);
+}
+function playCoinSound() { playSound(1200, 0.15, 'square'); }
+function playArtSound() { playSound(660, 0.5, 'sine'); }
+function playJumpSound() { playSound(300, 0.12, 'triangle'); }
+function playWinSound() {
+  if (!audioCtx) return;
+  [660, 880, 1100, 1320].forEach((f, i) => {
+    setTimeout(() => playSound(f, 0.3, 'sine'), i * 120);
+  });
+}
+
+// ---------- INPUT ----------
+const keys = {};
+
+// Keyboard input
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') && playing && !gameFinished) {
+    tryJump();
+    e.preventDefault();
+  }
+  if (e.key === 'c' || e.key === 'C') {
+    if (document.getElementById('viewer').classList.contains('open')) return;
+    if (document.getElementById('leaderboard').classList.contains('open')) return;
+    if (document.getElementById('win-screen').classList.contains('open')) return;
+    toggleGallery();
+  }
+  if (e.key === 'l' || e.key === 'L') {
+    if (document.getElementById('gallery').classList.contains('open')) return;
+    if (document.getElementById('win-screen').classList.contains('open')) return;
+    toggleLB();
+  }
+  if (e.key === 'Escape') {
+    if (document.getElementById('viewer').classList.contains('open')) closeViewer();
+    else if (document.getElementById('gallery').classList.contains('open')) toggleGallery();
+    else if (document.getElementById('leaderboard').classList.contains('open')) closeLB();
+  }
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+function tryJump() {
+  if (player.jumps < player.maxJumps) {
+    player.vy = JUMP_FORCE;
+    player.jumps++;
+    player.onGround = false;
+    if (player.jumps === 2) player.jetpackFlame = 15;
+    playJumpSound();
+  }
+}
+
+// ---------- TOUCH CONTROLS ----------
+let touchLeft = false, touchRight = false;
+
+function setupTouchButton(id, onDown, onUp) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener('touchstart', e => {
+    e.preventDefault();
+    el.classList.add('active');
+    onDown();
+  }, { passive: false });
+
+  el.addEventListener('touchend', e => {
+    e.preventDefault();
+    el.classList.remove('active');
+    onUp();
+  }, { passive: false });
+
+  el.addEventListener('touchcancel', e => {
+    el.classList.remove('active');
+    onUp();
+  });
+
+  // Also support mouse for testing
+  el.addEventListener('mousedown', e => {
+    e.preventDefault();
+    el.classList.add('active');
+    onDown();
+  });
+  el.addEventListener('mouseup', e => {
+    el.classList.remove('active');
+    onUp();
+  });
+  el.addEventListener('mouseleave', e => {
+    el.classList.remove('active');
+    onUp();
+  });
+}
+
+setupTouchButton('touch-left',
+  () => { touchLeft = true; },
+  () => { touchLeft = false; }
+);
+setupTouchButton('touch-right',
+  () => { touchRight = true; },
+  () => { touchRight = false; }
+);
+setupTouchButton('touch-jump',
+  () => { if (playing && !gameFinished) tryJump(); },
+  () => {}
+);
+
+// ---------- NAME INPUT ----------
+const nameInput = document.getElementById('player-name');
+const startBtn = document.getElementById('start-btn');
+
+nameInput.addEventListener('input', () => {
+  startBtn.disabled = nameInput.value.trim().length === 0;
+});
+nameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && nameInput.value.trim().length > 0) {
+    startBtn.click();
+  }
+});
+
+// ---------- DRAWING HELPERS ----------
+function drawAstronaut(px, py) {
+  const f = player.facing;
+  ctx.save();
+  ctx.translate(px, py);
+  if (f === -1) ctx.scale(-1, 1);
+
+  // Jetpack
+  ctx.fillStyle = '#555';
+  ctx.fillRect(-14, -28, 6, 20);
+  // Jetpack flame
+  if (player.jetpackFlame > 0 || !player.onGround) {
+    const flameH = player.jetpackFlame > 0 ? 12 + Math.random() * 8 : 4 + Math.random() * 3;
+    const grad = ctx.createLinearGradient(-12, -8, -12, -8 + flameH);
+    grad.addColorStop(0, '#F5A623');
+    grad.addColorStop(0.5, '#ff4400');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(-14, -8);
+    ctx.lineTo(-8, -8);
+    ctx.lineTo(-11, -8 + flameH);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Body (suit)
+  ctx.fillStyle = '#e8e8e8';
+  ctx.fillRect(-8, -25, 16, 22);
+  // Legs
+  ctx.fillStyle = '#ccc';
+  ctx.fillRect(-7, -3, 5, 12);
+  ctx.fillRect(2, -3, 5, 12);
+  // Boots
+  ctx.fillStyle = '#F5A623';
+  ctx.fillRect(-8, 9, 6, 4);
+  ctx.fillRect(2, 9, 6, 4);
+  // Arms
+  ctx.fillStyle = '#ddd';
+  ctx.fillRect(-10, -22, 4, 12);
+  ctx.fillRect(8, -22, 4, 12);
+  // Gloves
+  ctx.fillStyle = '#F5A623';
+  ctx.fillRect(-10, -10, 4, 4);
+  ctx.fillRect(8, -10, 4, 4);
+  // Helmet
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(0, -32, 12, 0, Math.PI * 2);
+  ctx.fill();
+  // Visor
+  ctx.fillStyle = '#F5A623';
+  ctx.beginPath();
+  ctx.arc(2, -32, 8, -0.5, 1.2);
+  ctx.fill();
+  // Visor shine
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.beginPath();
+  ctx.arc(4, -34, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawBitcoinCoin(x, y, time) {
+  const bob = Math.sin(time * 3 + x * 0.01) * 4;
+  const cy = y + bob;
+  const rot = time * 2 + x * 0.005;
+  const scaleX = Math.cos(rot);
+
+  ctx.save();
+  ctx.translate(x, cy);
+  ctx.scale(scaleX, 1);
+
+  ctx.fillStyle = '#f7931a';
+  ctx.beginPath();
+  ctx.arc(0, 0, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffc340';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, 8, 0, Math.PI * 2);
+  ctx.stroke();
+
+  if (Math.abs(scaleX) > 0.3) {
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('\u20BF', 0, 1);
+  }
+  ctx.restore();
+}
+
+function drawPlatform(p) {
+  const grad = ctx.createLinearGradient(p.x - cameraX, p.y, p.x - cameraX, p.y + p.h);
+  grad.addColorStop(0, '#2a2a35');
+  grad.addColorStop(1, '#1a1a22');
+  ctx.fillStyle = grad;
+  ctx.fillRect(p.x - cameraX, p.y, p.w, p.h);
+
+  ctx.strokeStyle = '#F5A623';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#F5A623';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(p.x - cameraX, p.y);
+  ctx.lineTo(p.x - cameraX + p.w, p.y);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.strokeStyle = 'rgba(245,166,35,0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(p.x - cameraX, p.y, p.w, p.h);
+}
+
+function drawArtFrame(frame, time) {
+  const sx = frame.x - cameraX;
+  const sy = frame.y + Math.sin(time * 1.5 + frame.artIndex) * 5;
+  const size = 60;
+
+  ctx.shadowColor = frame.collected ? 'rgba(0,255,100,0.5)' : '#F5A623';
+  ctx.shadowBlur = frame.collected ? 5 : 15;
+  ctx.strokeStyle = frame.collected ? '#0a5' : '#F5A623';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(sx, sy, size, size);
+  ctx.shadowBlur = 0;
+
+  if (frame.img) {
+    ctx.drawImage(frame.img, sx + 2, sy + 2, size - 4, size - 4);
+  } else {
+    ctx.fillStyle = 'rgba(245,166,35,0.1)';
+    ctx.fillRect(sx + 2, sy + 2, size - 4, size - 4);
+    ctx.fillStyle = '#F5A623';
+    ctx.font = '10px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('#' + (artData[frame.artIndex]?.num || '?'), sx + size/2, sy + size/2 + 3);
+  }
+
+  if (!frame.collected) {
+    ctx.fillStyle = 'rgba(245,166,35,0.6)';
+    ctx.font = '9px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('#' + (artData[frame.artIndex]?.num || ''), sx + size/2, sy + size + 12);
+  }
+}
+
+// ---------- PARTICLES ----------
+let particles = [];
+
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 1) * 5,
+      life: 30 + Math.random() * 20,
+      color,
+      size: 2 + Math.random() * 3
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life / 50;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - cameraX, p.y, p.size, p.size);
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ---------- POPUP ----------
+let popupTimer = 0;
+
+function showArtPopup(artIndex) {
+  const popup = document.getElementById('art-popup');
+  const img = document.getElementById('popup-img');
+  const title = document.getElementById('popup-title');
+  img.src = artData[artIndex].thumb;
+  title.textContent = artData[artIndex].title;
+  popup.style.display = 'block';
+  popupTimer = 90;
+}
+
+// ---------- GALLERY ----------
+function toggleGallery() {
+  const g = document.getElementById('gallery');
+  if (g.classList.contains('open')) {
+    g.classList.remove('open');
+  } else {
+    g.classList.add('open');
+    buildGallery();
+  }
+}
+
+function buildGallery() {
+  const grid = document.getElementById('gal-grid');
+  grid.innerHTML = '';
+  document.getElementById('gal-count').textContent = `${collected.size}/${TOTAL_ART}`;
+  artData.forEach((art, i) => {
+    const div = document.createElement('div');
+    div.className = 'cell' + (collected.has(i) ? '' : ' locked');
+    if (collected.has(i)) {
+      const img = document.createElement('img');
+      img.src = art.thumb;
+      img.loading = 'lazy';
+      div.appendChild(img);
+      div.onclick = () => openViewer(i);
+    }
+    const s = document.createElement('span');
+    s.textContent = '#' + art.num;
+    div.appendChild(s);
+    grid.appendChild(div);
+  });
+}
+
+let viewIdx = -1, viewList = [];
+function openViewer(i) {
+  viewList = [...collected].sort((a,b) => a-b);
+  viewIdx = viewList.indexOf(i);
+  showViewer();
+  document.getElementById('viewer').classList.add('open');
+}
+function showViewer() {
+  const i = viewList[viewIdx];
+  document.getElementById('viewer-img').src = artData[i].full;
+  document.getElementById('viewer-title').textContent = artData[i].title;
+  document.getElementById('viewer-num').textContent = '#' + artData[i].num;
+}
+function closeViewer() { document.getElementById('viewer').classList.remove('open'); }
+
+// ---------- LEADERBOARD ----------
+async function toggleLB() {
+  const lb = document.getElementById('leaderboard');
+  if (lb.classList.contains('open')) { closeLB(); return; }
+  lb.classList.add('open');
+  await renderLB();
+}
+function closeLB() { document.getElementById('leaderboard').classList.remove('open'); }
+function showLB() {
+  document.getElementById('win-screen').classList.remove('open');
+  document.getElementById('leaderboard').classList.add('open');
+  renderLB();
+}
+
+async function renderLB() {
+  const content = document.getElementById('lb-content');
+  content.innerHTML = `<div class="loading">${t('lbLoading')}</div>`;
+  const entries = await fetchLeaderboard();
+  if (!entries || entries.length === 0) {
+    content.innerHTML = `<div class="loading">${t('noScores')}</div>`;
+    return;
+  }
+  let html = `<table><thead><tr><th class="rank">${t('rank')}</th><th>${t('player')}</th><th>Art</th><th>${t('time')}</th><th>BTC</th></tr></thead><tbody>`;
+  entries.forEach((e, i) => {
+    const isYou = e.player_name === playerName;
+    const cls = (isYou ? ' class="you"' : '') + (!e.completed ? ' class="incomplete"' : '');
+    html += `<tr${cls}>`;
+    html += `<td class="rank">${i + 1}</td>`;
+    html += `<td class="name">${escapeHtml(e.player_name)}</td>`;
+    html += `<td class="art-col">${e.art_collected}/${TOTAL_ART}</td>`;
+    html += `<td class="time">${formatTime(parseFloat(e.time_seconds))}</td>`;
+    html += `<td class="btc-col">${e.bitcoin_collected} \u20BF</td>`;
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  content.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ---------- WIN SCREEN ----------
+async function showWinScreen() {
+  gameFinished = true;
+  timerRunning = false;
+  playWinSound();
+
+  document.getElementById('win-time').textContent = formatTime(timerElapsed);
+  document.getElementById('win-btc').textContent = btcCount + ' \u20BF';
+  document.getElementById('win-art').textContent = `${collected.size}/${TOTAL_ART}`;
+  document.getElementById('win-msg').textContent = t('submitting');
+  document.getElementById('win-screen').classList.add('open');
+
+  const result = await submitScore(playerName, timerElapsed, collected.size, btcCount, true);
+  if (result) {
+    document.getElementById('win-msg').textContent = t('scoreSubmitted');
+  } else {
+    document.getElementById('win-msg').textContent = t('submitFailed');
+  }
+  submittedScore = true;
+}
+
+function playAgain() {
+  document.getElementById('win-screen').classList.remove('open');
+  resetGame();
+}
+
+function resetGame() {
+  collected = new Set();
+  btcCount = 0;
+  gameFinished = false;
+  submittedScore = false;
+  timerElapsed = 0;
+  particles = [];
+  generateWorld();
+  player.x = 200;
+  player.y = H * GROUND_Y_RATIO - 50;
+  player.vy = 0;
+  player.vx = 0;
+  player.jumps = 0;
+  cameraX = 0;
+  checkpointX = 200;
+  document.getElementById('ui-art').textContent = `0 / ${TOTAL_ART}`;
+  document.getElementById('ui-btc').textContent = '0';
+  timerStart = performance.now();
+  timerRunning = true;
+}
+
+// ---------- UPDATE ----------
+let gameTime = 0;
+
+function update() {
+  if (!playing) return;
+  if (gameFinished) return;
+  if (document.getElementById('gallery').classList.contains('open')) return;
+  if (document.getElementById('viewer').classList.contains('open')) return;
+  if (document.getElementById('leaderboard').classList.contains('open')) return;
+
+  gameTime += 1/60;
+  updateTimer();
+
+  // Horizontal movement (keyboard OR touch)
+  player.vx = 0;
+  if (keys['ArrowRight'] || keys['d'] || keys['D'] || touchRight) { player.vx = MOVE_SPEED; player.facing = 1; }
+  if (keys['ArrowLeft'] || keys['a'] || keys['A'] || touchLeft) { player.vx = -MOVE_SPEED; player.facing = -1; }
+
+  player.x += player.vx;
+  player.vy += GRAVITY;
+  player.y += player.vy;
+
+  if (player.jetpackFlame > 0) player.jetpackFlame--;
+
+  // Platform collision
+  player.onGround = false;
+  for (const p of platforms) {
+    if (player.x + 10 > p.x && player.x - 10 < p.x + p.w) {
+      if (player.vy >= 0 && player.y + 13 >= p.y && player.y + 13 - player.vy <= p.y + 5) {
+        player.y = p.y - 13;
+        player.vy = 0;
+        player.onGround = true;
+        player.jumps = 0;
+      }
+    }
+  }
+
+  // Fall off screen → respawn
+  if (player.y > H + 100) {
+    player.x = checkpointX;
+    player.y = -50;
+    player.vy = 0;
+  }
+
+  // Update checkpoint
+  if (player.onGround) {
+    checkpointX = player.x;
+  }
+
+  // Camera follows player
+  cameraX = player.x - W * 0.3;
+
+  // Lazy load nearby art images
+  for (const frame of artFrames) {
+    if (Math.abs(frame.x - player.x) < W && !frame.loadStarted) {
+      loadArtImage(frame);
+    }
+  }
+
+  // Player collision box
+  const pLeft = player.x - 12;
+  const pRight = player.x + 12;
+  const pTop = player.y - 44;
+  const pBottom = player.y + 13;
+
+  // Collect art frames
+  for (const frame of artFrames) {
+    if (!frame.collected) {
+      const fy = frame.y + Math.sin(gameTime * 1.5 + frame.artIndex) * 5;
+      if (pRight > frame.x && pLeft < frame.x + 60 && pBottom > fy && pTop < fy + 60) {
+        frame.collected = true;
+        collected.add(frame.artIndex);
+        spawnParticles(frame.x + 30, fy + 30, '#F5A623', 20);
+        playArtSound();
+        showArtPopup(frame.artIndex);
+        document.getElementById('ui-art').textContent = `${collected.size} / ${TOTAL_ART}`;
+        if (collected.size >= TOTAL_ART) showWinScreen();
+      }
+    }
+  }
+
+  // Collect coins
+  for (const coin of coins) {
+    if (!coin.collected) {
+      const bob = Math.sin(gameTime * 3 + coin.x * 0.01) * 4;
+      const coinY = coin.y + bob;
+      if (pRight > coin.x - 14 && pLeft < coin.x + 14 && pBottom > coinY - 14 && pTop < coinY + 14) {
+        coin.collected = true;
+        btcCount++;
+        spawnParticles(coin.x, coinY, '#f7931a', 8);
+        playCoinSound();
+        document.getElementById('ui-btc').textContent = btcCount;
+      }
+    }
+  }
+
+  // Popup timer
+  if (popupTimer > 0) {
+    popupTimer--;
+    if (popupTimer <= 0) {
+      document.getElementById('art-popup').style.display = 'none';
+    }
+  }
+
+  updateParticles();
+}
+
+// ---------- DRAW ----------
+function draw() {
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Parallax stars
+  for (const s of stars) {
+    const sx = ((s.x - cameraX * s.speed) % W + W) % W;
+    const sy = s.y * H;
+    ctx.fillStyle = `rgba(255,255,255,${s.brightness})`;
+    ctx.fillRect(sx, sy, s.size, s.size);
+  }
+
+  // Background nebula
+  const nebulaHue = (cameraX * 0.002) % 360;
+  const nebGrad = ctx.createRadialGradient(W * 0.7, H * 0.3, 0, W * 0.7, H * 0.3, W * 0.6);
+  nebGrad.addColorStop(0, `hsla(${nebulaHue}, 60%, 15%, 0.15)`);
+  nebGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = nebGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Background planets
+  const bgPlanets = [
+    { x: 800, y: H * 0.2, r: 60, color: '#442200', parallax: 0.05 },
+    { x: 2500, y: H * 0.15, r: 100, color: '#1a1a44', parallax: 0.03 },
+    { x: 5000, y: H * 0.25, r: 45, color: '#332244', parallax: 0.04 },
+  ];
+  bgPlanets.forEach(bp => {
+    const bx = ((bp.x - cameraX * bp.parallax) % (W + bp.r * 4) + W + bp.r * 4) % (W + bp.r * 4) - bp.r * 2;
+    ctx.fillStyle = bp.color;
+    ctx.beginPath();
+    ctx.arc(bx, bp.y, bp.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `${bp.color}88`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(bx, bp.y, bp.r * 1.6, bp.r * 0.3, 0.2, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Platforms
+  for (const p of platforms) {
+    const sx = p.x - cameraX;
+    if (sx > -p.w && sx < W + 50) drawPlatform(p);
+  }
+
+  // Coins
+  for (const coin of coins) {
+    if (!coin.collected) {
+      const sx = coin.x - cameraX;
+      if (sx > -20 && sx < W + 20) drawBitcoinCoin(sx, coin.y, gameTime + coin.bobOffset);
+    }
+  }
+
+  // Art frames
+  for (const frame of artFrames) {
+    const sx = frame.x - cameraX;
+    if (sx > -80 && sx < W + 80) drawArtFrame(frame, gameTime);
+  }
+
+  // Particles
+  drawParticles();
+
+  // Player
+  drawAstronaut(player.x - cameraX, player.y);
+}
+
+// ---------- GAME LOOP ----------
+function gameLoop() {
+  requestAnimationFrame(gameLoop);
+  update();
+  draw();
+}
+
+// ---------- START ----------
+startBtn.addEventListener('click', async () => {
+  const name = nameInput.value.trim();
+  if (!name) return;
+  playerName = name;
+  initAudio();
+  // Blur input to dismiss mobile keyboard
+  nameInput.blur();
+  // Small delay to let keyboard dismiss before starting
+  setTimeout(() => {
+    document.getElementById('intro').classList.add('hidden');
+    document.getElementById('ui').style.display = 'flex';
+    resize(); // Re-measure after keyboard dismisses
+    generateWorld();
+    player.x = 200;
+    player.y = H * GROUND_Y_RATIO - 50;
+    player.vy = 0;
+    playing = true;
+    timerStart = performance.now();
+    timerRunning = true;
+  }, isTouchDevice ? 400 : 50);
+});
+
+// Intro leaderboard button
+document.getElementById('intro-lb-btn').addEventListener('click', () => {
+  document.getElementById('leaderboard').classList.add('open');
+  renderLB();
+});
+
+// ---------- INIT ----------
+(async function() {
+  await loadMetadata();
+  gameLoop();
+  setTimeout(() => nameInput.focus(), 300);
+})();
+</script>
+</body>
+</html>
