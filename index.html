@@ -22,7 +22,7 @@ body{background:#0a0a0f;font-family:'Courier New',monospace;color:#e0e0e0;oversc
 canvas{display:block;width:100%;height:100%}
 
 /* HUD */
-#ui{position:fixed;top:0;left:0;right:0;padding:max(8px, env(safe-area-inset-top)) 15px 6px;display:flex;justify-content:space-between;pointer-events:none;z-index:10;background:linear-gradient(to bottom,rgba(10,10,15,0.7),transparent)}
+#ui{position:fixed;top:0;left:0;right:0;padding:calc(max(12px, env(safe-area-inset-top)) + 28px) 15px 6px;display:flex;justify-content:space-between;pointer-events:none;z-index:10;background:linear-gradient(to bottom,rgba(10,10,15,0.7),transparent)}
 .stat{text-align:center}
 .stat-label{font-size:clamp(7px,1.5vw,9px);color:#666;letter-spacing:2px;text-transform:uppercase}
 .stat-value{font-size:clamp(14px,3vw,20px);color:#F5A623;text-shadow:0 0 10px rgba(245,166,35,0.4)}
@@ -54,7 +54,7 @@ canvas{display:block;width:100%;height:100%}
 .lb-btn{background:none;border:1px solid #444;color:#888;padding:8px 20px;font-family:inherit;font-size:11px;letter-spacing:2px;cursor:pointer;margin-top:12px;transition:all .3s}
 .lb-btn:hover{border-color:#F5A623;color:#F5A623}
 #intro .credit{font-size:clamp(8px,1.6vw,10px);color:#333;letter-spacing:1px;margin-top:20px}
-#lang-toggle{position:fixed;top:max(8px,env(safe-area-inset-top));left:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:4px 10px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;z-index:101;border-radius:4px;transition:all .3s}
+#lang-toggle{position:fixed;top:calc(max(8px,env(safe-area-inset-top)) + 2px);left:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:4px 10px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;z-index:101;border-radius:4px;transition:all .3s}
 #lang-toggle:hover{border-color:#F5A623;color:#F5A623}
 
 /* MOBILE TOUCH CONTROLS */
@@ -64,7 +64,7 @@ canvas{display:block;width:100%;height:100%}
 .touch-btn{width:clamp(58px,14vw,80px);height:clamp(58px,14vw,80px);border-radius:16px;background:rgba(245,166,35,0.08);border:2px solid rgba(245,166,35,0.25);color:rgba(245,166,35,0.6);display:flex;justify-content:center;align-items:center;font-size:clamp(22px,5vw,32px);pointer-events:auto;-webkit-touch-callout:none}
 .touch-btn.active{background:rgba(245,166,35,0.2);border-color:rgba(245,166,35,0.6);color:#F5A623}
 #touch-jump{width:clamp(80px,20vw,110px);height:clamp(80px,20vw,110px);border-radius:50%;font-size:clamp(10px,2.2vw,13px);letter-spacing:2px;font-family:inherit;font-weight:bold}
-#touch-menu{display:flex;gap:6px;position:fixed;top:max(6px,env(safe-area-inset-top));right:10px;z-index:16;pointer-events:auto}
+#touch-menu{display:flex;gap:6px;position:fixed;top:calc(max(6px,env(safe-area-inset-top)) + 2px);right:10px;z-index:16;pointer-events:auto}
 .touch-visible #touch-menu{display:flex}
 .tmenu-btn{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;display:none;justify-content:center;align-items:center;font-size:14px;font-family:inherit;pointer-events:auto}
 .touch-visible .tmenu-btn{display:flex}
@@ -108,6 +108,7 @@ canvas{display:block;width:100%;height:100%}
 #leaderboard .btc-col{color:#f7931a}
 #leaderboard .art-col{color:#F5A623}
 #leaderboard .incomplete{opacity:0.5}
+#leaderboard .date-col{color:#555;font-size:clamp(8px,1.8vw,11px)}
 #leaderboard .lb-close{background:none;border:1px solid #444;color:#888;padding:8px 20px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:2px;margin-top:20px}
 #leaderboard .lb-close:hover{border-color:#F5A623;color:#F5A623}
 #leaderboard .loading{color:#444;font-size:12px;margin-top:40px}
@@ -314,7 +315,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 async function fetchLeaderboard() {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/metaplanet_leaderboard?order=completed.desc,time_seconds.asc,bitcoin_collected.desc&limit=50`,
+      `${SUPABASE_URL}/rest/v1/metaplanet_leaderboard?select=*&order=completed.desc,time_seconds.asc,bitcoin_collected.desc&limit=50`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
     return await res.json();
@@ -907,16 +908,18 @@ async function renderLB() {
     content.innerHTML = `<div class="loading">${t('noScores')}</div>`;
     return;
   }
-  let html = `<table><thead><tr><th class="rank">${t('rank')}</th><th>${t('player')}</th><th>Art</th><th>${t('time')}</th><th>BTC</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th class="rank">${t('rank')}</th><th>${t('player')}</th><th>Art</th><th>${t('time')}</th><th>BTC</th><th class="date-col">${currentLang === 'ja' ? '日付' : 'Date'}</th></tr></thead><tbody>`;
   entries.forEach((e, i) => {
     const isYou = e.player_name === playerName;
     const cls = (isYou ? ' class="you"' : '') + (!e.completed ? ' class="incomplete"' : '');
+    const dateStr = e.created_at ? new Date(e.created_at).toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : 'en-US', {month:'short',day:'numeric'}) : '';
     html += `<tr${cls}>`;
     html += `<td class="rank">${i + 1}</td>`;
     html += `<td class="name">${escapeHtml(e.player_name)}</td>`;
     html += `<td class="art-col">${e.art_collected}/${TOTAL_ART}</td>`;
     html += `<td class="time">${formatTime(parseFloat(e.time_seconds))}</td>`;
     html += `<td class="btc-col">${e.bitcoin_collected} \u20BF</td>`;
+    html += `<td class="date-col">${dateStr}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table>';
