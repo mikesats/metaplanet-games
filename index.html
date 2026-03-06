@@ -113,6 +113,11 @@ canvas{display:block;width:100%;height:100%}
 #leaderboard .lb-close:hover{border-color:#F5A623;color:#F5A623}
 #leaderboard .loading{color:#444;font-size:12px;margin-top:40px}
 #leaderboard .rank-note{font-size:clamp(8px,1.8vw,10px);color:#666;margin-bottom:15px;font-style:italic}
+.btc-lb-section{margin-top:30px;width:95%;max-width:500px;display:flex;flex-direction:column;align-items:center}
+.btc-lb-title{font-size:clamp(13px,3.5vw,17px);color:#f7931a;letter-spacing:3px;margin-bottom:5px}
+.btc-lb-section table{border-collapse:collapse;width:100%}
+.btc-lb-section th{font-size:clamp(8px,1.6vw,10px);color:#888;letter-spacing:1px;text-transform:uppercase;padding:5px 6px;text-align:left;border-bottom:1px solid #222;white-space:nowrap}
+.btc-lb-section td{font-size:clamp(10px,2.2vw,13px);padding:6px 6px;border-bottom:1px solid #151518;white-space:nowrap}
 
 /* WIN SCREEN */
 #win-screen{position:fixed;inset:0;background:rgba(5,5,10,0.95);z-index:90;display:none;justify-content:center;align-items:center;flex-direction:column;padding:20px}
@@ -191,6 +196,11 @@ canvas{display:block;width:100%;height:100%}
   <div class="sub" data-i18n="worldRankings">WORLDWIDE RANKINGS</div>
   <div class="sub rank-note" data-i18n="rankNote">Ranked by fastest time + most BTC collected</div>
   <div id="lb-content"><div class="loading" data-i18n="loading">Loading...</div></div>
+  <div class="btc-lb-section">
+    <h3 class="btc-lb-title" data-i18n="btcLbTitle">MOST BITCOIN COLLECTED</h3>
+    <div class="sub rank-note" data-i18n="btcLbNote">Top 15 by BTC</div>
+    <div id="btc-lb-content"></div>
+  </div>
   <button class="lb-close" onclick="closeLB()" data-i18n="close">CLOSE</button>
 </div>
 
@@ -254,7 +264,9 @@ const i18n = {
     player: 'Player',
     rank: '#',
     jump: 'JUMP',
-    rankNote: 'Ranked by fastest time + most BTC collected'
+    rankNote: 'Ranked by fastest time + most BTC collected',
+    btcLbTitle: 'MOST BITCOIN COLLECTED',
+    btcLbNote: 'Top 15 by BTC'
   },
   ja: {
     artCollected: '\u30A2\u30FC\u30C8\u53CE\u96C6',
@@ -280,7 +292,9 @@ const i18n = {
     player: '\u30D7\u30EC\u30A4\u30E4\u30FC',
     rank: '#',
     jump: '\u30B8\u30E3\u30F3\u30D7',
-    rankNote: '\u6700\u901F\u30BF\u30A4\u30E0\uFF0B\u6700\u591ABTC\u3067\u30E9\u30F3\u30AD\u30F3\u30B0'
+    rankNote: '\u6700\u901F\u30BF\u30A4\u30E0\uFF0B\u6700\u591ABTC\u3067\u30E9\u30F3\u30AD\u30F3\u30B0',
+    btcLbTitle: '\u6700\u591ABTC\u30E9\u30F3\u30AD\u30F3\u30B0',
+    btcLbNote: 'BTC\u30C8\u30C3\u30D715'
   }
 };
 
@@ -320,6 +334,16 @@ async function fetchLeaderboard() {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/metaplanet_leaderboard?select=*&order=completed.desc,time_seconds.asc,bitcoin_collected.desc&limit=50`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    return await res.json();
+  } catch (e) { return []; }
+}
+
+async function fetchBtcLeaderboard() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/metaplanet_leaderboard?select=*&order=bitcoin_collected.desc,time_seconds.asc&limit=15`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
     return await res.json();
@@ -928,6 +952,25 @@ async function renderLB() {
   });
   html += '</tbody></table>';
   content.innerHTML = html;
+
+  // BTC leaderboard
+  const btcContent = document.getElementById('btc-lb-content');
+  const btcEntries = await fetchBtcLeaderboard();
+  if (btcEntries && btcEntries.length > 0) {
+    let btcHtml = `<table><thead><tr><th class="rank">${t('rank')}</th><th>${t('player')}</th><th>BTC</th><th>${t('time')}</th></tr></thead><tbody>`;
+    btcEntries.forEach((e, i) => {
+      const isYou = e.player_name === playerName;
+      const cls = isYou ? ' class="you"' : '';
+      btcHtml += `<tr${cls}>`;
+      btcHtml += `<td class="rank">${i + 1}</td>`;
+      btcHtml += `<td class="name">${escapeHtml(e.player_name)}</td>`;
+      btcHtml += `<td class="btc-col">${e.bitcoin_collected} \u20BF</td>`;
+      btcHtml += `<td class="time">${formatTime(parseFloat(e.time_seconds))}</td>`;
+      btcHtml += '</tr>';
+    });
+    btcHtml += '</tbody></table>';
+    btcContent.innerHTML = btcHtml;
+  }
 }
 
 function escapeHtml(s) {
