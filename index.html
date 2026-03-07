@@ -106,6 +106,8 @@ canvas{display:block;width:100%;height:100%}
 #leaderboard .name{color:#e0e0e0;max-width:100px;overflow:hidden;text-overflow:ellipsis}
 #leaderboard .time{color:#0f0;font-variant-numeric:tabular-nums}
 #leaderboard .btc-col{color:#f7931a}
+.cheat-tag{font-size:clamp(8px,1.5vw,10px);color:#ff4444;margin-left:4px}
+#leaderboard tr.cheated td{opacity:0.5}
 .lb-play-again{background:none;border:2px solid #F5A623;color:#F5A623;padding:8px 24px;font-family:inherit;font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;cursor:pointer;transition:all .3s;margin-bottom:15px}
 .lb-play-again:hover{background:#F5A623;color:#0a0a0f}
 #leaderboard .art-col{color:#F5A623}
@@ -368,17 +370,32 @@ async function fetchBtcLeaderboard() {
   } catch (e) { return []; }
 }
 
+// HMAC signing
+const _k = [109,51,116,52,112,108,52,110,51,116,95,114,117,110,110,51,114,95,50,48,50,54,95,115,51,99,114,51,116];
+async function _sign(payload) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(String.fromCharCode(..._k)), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
 async function submitScore(name, timeSec, artCount, btc, completed) {
   try {
+    const ts = Date.now();
+    const t_rounded = Math.round(timeSec * 100) / 100;
+    const payload = `${name}:${t_rounded}:${artCount}:${btc}:${completed}:${ts}`;
+    const sig = await _sign(payload);
     const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-score`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         player_name: name,
-        time_seconds: Math.round(timeSec * 100) / 100,
+        time_seconds: t_rounded,
         art_collected: artCount,
         bitcoin_collected: btc,
-        completed: completed
+        completed: completed,
+        ts: ts,
+        sig: sig
       })
     });
     if (!res.ok) return null;
@@ -934,6 +951,12 @@ function showViewer() {
 }
 function closeViewer() { document.getElementById('viewer').classList.remove('open'); }
 
+// Flagged cheater entry IDs
+const CHEATER_IDS = new Set([
+  '7e34c572-5e0f-4c8a-91c7-0e91d47fa01a', // Don Quixote 15.00s
+  '8a63667b-d493-4112-9abc-f9ba95004714'  // 637¥ 15.46s
+]);
+
 // ---------- LEADERBOARD ----------
 async function toggleLB() {
   const lb = document.getElementById('leaderboard');
@@ -959,13 +982,18 @@ async function renderLB() {
   let html = `<table><thead><tr><th class="rank">${t('rank')}</th><th>${t('player')}</th><th>Art</th><th>${t('time')}</th><th>BTC</th><th class="date-col">${currentLang === 'ja' ? '日付' : 'Date'}</th></tr></thead><tbody>`;
   entries.forEach((e, i) => {
     const isYou = e.player_name === playerName;
-    const cls = (isYou ? ' class="you"' : '') + (!e.completed ? ' class="incomplete"' : '');
+    const cheated = CHEATER_IDS.has(e.id);
+    let trClass = [];
+    if (isYou) trClass.push('you');
+    if (!e.completed) trClass.push('incomplete');
+    if (cheated) trClass.push('cheated');
+    const cls = trClass.length ? ` class="${trClass.join(' ')}"` : '';
     const dateStr = e.created_at ? new Date(e.created_at).toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : 'en-US', {month:'short',day:'numeric'}) : '';
     html += `<tr${cls}>`;
     html += `<td class="rank">${i + 1}</td>`;
-    html += `<td class="name">${escapeHtml(e.player_name)}</td>`;
+    html += `<td class="name">${escapeHtml(e.player_name)}${cheated ? ' <span class="cheat-tag">🤥</span>' : ''}</td>`;
     html += `<td class="art-col">${e.art_collected}/${TOTAL_ART}</td>`;
-    html += `<td class="time">${formatTime(parseFloat(e.time_seconds))}</td>`;
+    html += `<td class="time">${cheated ? '<s>' : ''}${formatTime(parseFloat(e.time_seconds))}${cheated ? '</s>' : ''}</td>`;
     html += `<td class="btc-col">${e.bitcoin_collected} \u20BF</td>`;
     html += `<td class="date-col">${dateStr}</td>`;
     html += '</tr>';
