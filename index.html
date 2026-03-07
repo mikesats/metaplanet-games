@@ -412,6 +412,7 @@ let artData = [];    // random 21 from #358-#407
 let collected = new Set();
 let btcCount = 0;
 let cameraX = 0;
+let levelEndX = 0;
 let playerName = '';
 let timerStart = 0;
 let timerElapsed = 0;
@@ -509,6 +510,7 @@ function generateWorld() {
     px += platW;
     platIndex++;
   }
+  levelEndX = px;
 }
 
 // ---------- TIMER ----------
@@ -1094,6 +1096,20 @@ function update() {
   // Update checkpoint
   if (player.onGround) {
     checkpointX = player.x;
+  }
+
+  // Wrap-around: loop back to start when reaching level end
+  if (player.x > levelEndX + 100) {
+    player.x = 50;
+    player.y = -50;
+    player.vy = 0;
+    checkpointX = 50;
+    // Respawn all uncollected coins
+    for (const coin of coins) {
+      if (coin.collected) {
+        coin.collected = false;
+      }
+    }
   }
 
   // Camera follows player
