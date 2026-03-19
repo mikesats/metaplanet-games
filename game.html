@@ -1480,6 +1480,17 @@ function update() {
 
   // Update moving platforms
   for (const p of platforms) {
+    // Regen crumbled platforms after 3 seconds
+    if (p.destroyed && p.crumbling) {
+      p.regenTimer = (p.regenTimer || 0) + 1;
+      if (p.regenTimer >= 180) { // 3 seconds at 60fps
+        p.destroyed = false;
+        p.crumbling_active = false;
+        p.crumbleTimer = 0;
+        p.regenTimer = 0;
+      }
+      continue;
+    }
     if (p.destroyed) continue;
     if (p.moving) {
       if (p.axis === 'x') p.x = p.baseX + Math.sin(gameTime * p.speed + p.phase) * p.amplitude;
@@ -1490,6 +1501,7 @@ function update() {
       p.crumbleTimer++;
       if (p.crumbleTimer >= 90) { // 1.5 seconds at 60fps
         p.destroyed = true;
+        p.regenTimer = 0;
         spawnParticles(p.x + p.w/2, p.y, '#666', 15, 8, 4);
         playCrumbleSound();
       }
@@ -1807,6 +1819,18 @@ function draw() {
 
   // Platforms
   for (const p of platforms) {
+    // Show regen shimmer for crumbling platforms about to respawn
+    if (p.destroyed && p.crumbling && p.regenTimer > 120) {
+      const sx = p.x - cameraX;
+      if (sx > -p.w - 50 && sx < W + 50) {
+        const regenProgress = (p.regenTimer - 120) / 60; // fade in over last 1s
+        ctx.globalAlpha = regenProgress * 0.4;
+        ctx.fillStyle = '#F5A623';
+        ctx.fillRect(sx, p.y, p.w, p.h);
+        ctx.globalAlpha = 1;
+      }
+      continue;
+    }
     if (p.destroyed) continue;
     const sx = (p.moving && p.axis === 'x' ? p.baseX + Math.sin(gameTime * p.speed + p.phase) * p.amplitude : p.x) - cameraX;
     if (sx > -p.w - 50 && sx < W + 50) drawPlatform(p, gameTime);
