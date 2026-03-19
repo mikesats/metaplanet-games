@@ -1337,10 +1337,10 @@ async function renderLB() {
     entries = await fetchLeaderboard(currentSeason, currentLBMode);
     if (!entries?.length) { content.innerHTML = `<div class="loading">${t('noScores')}</div>`; return; }
   }
-  let html = `<table><thead><tr><th class="rank">#</th><th>${t('player')}</th><th>${t('art')}</th><th>${t('time')}</th><th>BTC</th><th>${t('combo')}</th></tr></thead><tbody>`;
+  let hasUnverified = false; let html = `<table><thead><tr><th class="rank">#</th><th>${t('player')}</th><th>${t('art')}</th><th>${t('time')}</th><th>BTC</th><th>${t('combo')}</th></tr></thead><tbody>`;
   entries.forEach((e, i) => {
     const isYou = e.player_name === playerName;
-    const verified = (LOCAL_DEV || currentSeason === 3) ? '<span class="verified-badge" title="Verified">✓</span>' : '';
+    const verified = (e.verified) ? '<span class="verified-badge" title="Verified">✓</span>' : '<span class="unverified-badge" title="Unverified">*</span>';
     html += `<tr${isYou ? ' class="you"' : ''}>`;
     html += `<td class="rank">${i+1}</td><td class="name">${escapeHtml(e.player_name)}${verified}</td>`;
     html += `<td class="art-col">${e.art_collected||0}/${TOTAL_ART}</td>`;
@@ -1349,7 +1349,7 @@ async function renderLB() {
     html += `<td>${e.max_combo || '-'}</td></tr>`;
   });
   html += '</tbody></table>';
-  content.innerHTML = html;
+  content.innerHTML = html; if (hasUnverified) { content.insertAdjacentHTML('beforeend', '<div style="color:#666;font-size:10px;text-align:center;margin-top:12px;letter-spacing:1px">* = unverified score (HMAC signature missing)</div>'); }
   if (LOCAL_DEV) {
     content.insertAdjacentHTML('beforeend', `<div style="color:#555;font-size:10px;text-align:center;margin-top:12px;letter-spacing:1px">${t('localDev')}</div>`);
   }
