@@ -487,7 +487,7 @@ function applyLang() {
   document.getElementById('win-lb-btn').textContent = t('lb');
   document.getElementById('win-play-btn').textContent = t('playAgain');
   // Re-apply mode rules in current language
-  if (typeof selectMode === 'function') selectMode(gameMode);
+  try { if (typeof selectMode === 'function') selectMode(gameMode); } catch(e) {}
 }
 document.getElementById('lang-toggle').addEventListener('click', () => {
   currentLang = currentLang === 'en' ? 'ja' : 'en';
