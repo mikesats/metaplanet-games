@@ -1334,7 +1334,7 @@ async function renderLB() {
     entries = MOCK_LB;
   } else {
     content.innerHTML = `<div class="loading">${t('loading')}</div>`;
-    entries = await fetchLeaderboard(currentSeason, currentLBMode);
+    entries = currentLBMode === 'timeattack' ? await fetchBtcLeaderboard(currentSeason, currentLBMode) : await fetchLeaderboard(currentSeason, currentLBMode);
     if (!entries?.length) { content.innerHTML = `<div class="loading">${t('noScores')}</div>`; return; }
   }
   let hasUnverified = false; let html = `<table><thead><tr><th class="rank">#</th><th>${t('player')}</th><th>${t('art')}</th><th>${t('time')}</th><th>BTC</th><th>${t('combo')}</th></tr></thead><tbody>`;
