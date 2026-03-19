@@ -550,7 +550,7 @@ async function submitScore(name, timeSec, artCount, btc, completed, mode, mxComb
     const eventLogStr = JSON.stringify(evtLog);
     let hmacSig = null;
     if (sessionSecret && evtLog.length > 0) {
-      hmacSig = await hmacSign(eventLogStr, sessionSecret);
+      try { hmacSig = await hmacSign(eventLogStr, sessionSecret); } catch(e) { console.warn('HMAC failed:', e); }
     }
 
     const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-score`, {
